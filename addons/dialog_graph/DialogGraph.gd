@@ -36,7 +36,6 @@ func clear_graph():
 	nodes.clear()
 	default_conversation = null
 	ids.clear()
-		
 
 func remove_node(node):	
 	ids.erase(int(node.get_name().replace("Node","")))
@@ -83,6 +82,4 @@ func _on_DialogGraph_disconnection_request(from, from_slot, to, to_slot):
 	from_slot = String(from_slot)
 	connections[from].erase(String(from_slot))
 	if connections[from].empty():
-				connections.erase(from)
-	
-	
+		connections.erase(from)

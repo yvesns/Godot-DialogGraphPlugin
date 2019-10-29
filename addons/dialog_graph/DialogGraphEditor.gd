@@ -7,9 +7,8 @@ var choice_node = preload("ChoiceGraphNode.tscn")
 var condition_node = preload("ConditionGraphNode.tscn")
 var mux_node = preload("MuxGraphNode.tscn")
 var jump_node = preload("JumpGraphNode.tscn")
-var graph
+var graph = null
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	graph = $Panel/Margin/VBox/DialogGraph
 
@@ -35,25 +34,32 @@ func get_data():
 	var data = {}
 	data["connections"] = graph.get_connection_list()
 	data["sc"] = graph.connections
+	
 	if graph.default_conversation:
 		data["default_conversation"] = graph.default_conversation.get_name()
 	data["nodes"] = {}
+	
 	for child in graph.nodes:
 		data["nodes"][child.get_name()] = child.get_data()
+	
 	return data
 
 func get_export_data():
 	var data = {}
+	
 	data["sc"] = graph.connections
 	data["default_conversation"] = graph.default_conversation.get_name()
 	data["nodes"] = {}
+	
 	for child in graph.nodes:
 		data["nodes"][child.get_name()] = child.get_export_data()
+		
 	return data
 
 func set_data(data):
 	for node in data["nodes"]:
 		var node_type
+		
 		match data["nodes"][node]["type"]:
 			"Conversation": node_type = conversation_node
 			"Speech": node_type = speech_node
@@ -61,18 +67,23 @@ func set_data(data):
 			"Condition": node_type = condition_node
 			"Mux": node_type = mux_node
 			"Jump": node_type = jump_node
+		
 		var instance = graph.create_node(node_type, int(node.replace("Node", "")))
 		instance.set_data(data["nodes"][node])
+		
 	for connection in data["connections"]:
 		graph._on_DialogGraph_connection_request(connection["from"], connection["from_port"], connection["to"], connection["to_port"])
+		
 	if data.has("default_conversation"):
 		var default = null
 		var i = 0
+		
 		while !graph.default_conversation:
 			if data["default_conversation"] == graph.nodes[i].get_name():
 				graph.default_conversation = graph.nodes[i]
 			else:
 				i += 1
+		
 		graph.default_conversation.turn_on()
 
 func _on_Save_pressed():
@@ -81,9 +92,12 @@ func _on_Save_pressed():
 func _on_SaveWindow_confirmed():
 	var file_name = $SaveWindow.current_file
 	var file = File.new()
+	
 	file.open(file_name, File.WRITE)
-	file.store_string(to_json(get_data()))
+	#file.store_string(to_json(get_data()))
+	file.store_string(JSON.print(get_data()))
 	file.close()
+	
 	$SaveWindow.hide()
 
 func _on_Export_pressed():
@@ -95,23 +109,16 @@ func _on_Export_pressed():
 func _on_ExportWindow_confirmed():
 	var file_name = $ExportWindow.current_file
 	var file = File.new()
+	
 	file.open(file_name, File.WRITE)
-	file.store_string(to_json(get_export_data()))
+	#file.store_string(to_json(get_export_data()))
+	file.store_string(JSON.print(get_export_data()))
 	file.close()
+	
 	$ExportWindow.hide()
 
 func _on_Load_pressed():
 	$LoadWindow.popup()
-
-func _on_LoadWindow_confirmed():
-	graph.clear_graph()
-	var file_name = $LoadWindow.current_file
-	var file = File.new()
-	file.open(file_name, File.READ)
-	var data = parse_json(file.get_as_text())
-	file.close()
-	set_data(data)
-	$LoadWindow.hide()
 
 func _on_Clear_pressed():
 	$ClearWindow.popup()
@@ -120,3 +127,15 @@ func _on_ClearWindow_confirmed():
 	graph.clear_graph()
 	$ClearWindow.hide()
 
+func _on_LoadWindow_file_selected(path):
+	graph = $Panel/Margin/VBox/DialogGraph
+	graph.clear_graph()
+	
+	var file_name = $LoadWindow.current_path
+	var file = File.new()
+	file.open(file_name, File.READ)
+	var data = parse_json(file.get_as_text())
+	file.close()
+	
+	set_data(data)
+	$LoadWindow.hide()

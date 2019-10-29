@@ -53,6 +53,5 @@ func _on_NodeLine1_line_entered(new_line):
 	set_second_line(translation)
 	#get_parent().rect_size.x = get_parent().rect_min_size.x
 
-
 func _on_NodeLine2_line_changed(new_line):
 	get_parent().rect_size.x = get_parent().rect_min_size.x
